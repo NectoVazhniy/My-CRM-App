@@ -8,7 +8,6 @@ from openpyxl.workbook import Workbook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
@@ -21,20 +20,29 @@ if not db_url:
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-# Путь к файлу сертификата — укажи, где он лежит в проекте
+# Путь к SSL сертификату
 ssl_cert_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BaltimoreCyberTrustRoot.crt.pem')
 
-# Настройки SQLAlchemy
+# Настройка SQLAlchemy с fallback
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Подключение с SSL и проверкой сертификата
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "connect_args": {
-        "sslmode": "verify-ca",
-        "sslrootcert": ssl_cert_path
+if os.path.exists(ssl_cert_path):
+    print(f"✅ SSL сертификат найден: {ssl_cert_path}")
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "connect_args": {
+            "sslmode": "verify-ca",
+            "sslrootcert": ssl_cert_path
+        }
     }
-}
+else:
+    print(f"⚠️ SSL сертификат не найден по пути: {ssl_cert_path}")
+    print("➡️ Используется sslmode=require (без проверки CA)")
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "connect_args": {
+            "sslmode": "require"
+        }
+    }
 
 # Инициализация базы данных
 db = SQLAlchemy(app)
@@ -46,7 +54,6 @@ try:
     print("✅ УСПЕШНО: подключение к базе прошло.")
 except Exception as e:
     print("❌ ОШИБКА при подключении к базе:", e)
-    
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
