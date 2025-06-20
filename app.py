@@ -18,6 +18,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = db_url  # Используем испр�
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+try:
+    with app.app_context():
+        db.session.execute("SELECT 1")
+    print("✅ УСПЕШНО: подключение к базе прошло.")
+except Exception as e:
+    print("❌ ОШИБКА при подключении к базе:", e)
+
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
