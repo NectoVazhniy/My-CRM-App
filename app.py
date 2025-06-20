@@ -12,21 +12,23 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
-db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
+b_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if not db_url:
     raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
 
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-if "?sslmode=" not in db_url:
-    if "?" in db_url:
-        db_url += "&sslmode=require"
-    else:
-        db_url += "?sslmode=require"
-
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Добавляем SSL через engine options (вот тут важно)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "connect_args": {
+        "sslmode": "require"
+    }
+}
+
 db = SQLAlchemy(app)
 
 try:
