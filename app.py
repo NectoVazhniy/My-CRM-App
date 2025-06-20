@@ -3,6 +3,7 @@ import io
 import datetime
 import os
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from openpyxl.workbook import Workbook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,17 +11,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
-
 db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
-if db_url and db_url.startswith("postgres://"):
+if not db_url:
+    raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
+if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url + "?sslmode=require" if db_url else None
+if "?sslmode=" not in db_url:
+    db_url += "?sslmode=require"
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
 try:
     with app.app_context():
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
     print("✅ УСПЕШНО: подключение к базе прошло.")
 except Exception as e:
     print("❌ ОШИБКА при подключении к базе:", e)
