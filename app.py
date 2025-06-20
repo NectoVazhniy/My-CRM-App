@@ -9,35 +9,41 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+# Инициализация Flask
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
+# Получение и проверка URL базы данных
 db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if not db_url:
     raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
 
+# Исправляем старый формат URL, если он есть
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+# Настройки SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Добавляем SSL через engine options (вот тут важно)
+# КЛЮЧЕВОЕ: подключение с SSL
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "connect_args": {
-        "sslmode": "require"
+        "sslmode": "require"  # можно также попробовать "prefer" или "allow"
     }
 }
 
+# Инициализация базы данных
 db = SQLAlchemy(app)
 
+# Проверка подключения
 try:
     with app.app_context():
         db.session.execute(text("SELECT 1"))
     print("✅ УСПЕШНО: подключение к базе прошло.")
 except Exception as e:
     print("❌ ОШИБКА при подключении к базе:", e)
-
+    
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
