@@ -14,7 +14,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if db_url and db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL") + "?sslmode=require"
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url + "?sslmode=require" if db_url else None
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -101,18 +101,21 @@ def days_until_birthday(birth_date_str):
 
 
 def sort_by_bonus_points(clients):
-    return sorted(clients, key=lambda c: c['bonus_points'], reverse=True)
+    return sorted(clients, key=lambda c: c.bonus_points, reverse=True)
 
 def sort_by_nearest_birthday(clients):
     with_dates = []
     without_dates = []
 
     for c in clients:
-        days = days_until_birthday(c['birth_date'])
+        days = days_until_birthday(c.birth_date)
         if days == 9999:
             without_dates.append(c)
         else:
             with_dates.append((days, c))
+
+    with_dates.sort(key=lambda x: x[0])
+    return [c for _, c in with_dates] + without_dates
 
     with_dates.sort(key=lambda x: x[0])
     return [c for _, c in with_dates] + without_dates
@@ -126,18 +129,18 @@ def parse_order_date(date_str):
 
 def sort_by_last_order_oldest(clients):
     return sorted(clients, key=lambda c: (
-        parse_order_date(c['last_order_date']) is None,  # без даты → в начало
-        parse_order_date(c['last_order_date']) or datetime.date.min
+        parse_order_date(c.last_order_date) is None,
+        parse_order_date(c.last_order_date) or datetime.date.min
     ))
 
 def sort_by_last_order_newest(clients):
     return sorted(clients, key=lambda c: (
-        parse_order_date(c['last_order_date']) is None,  # без даты → в конец
-        -(parse_order_date(c['last_order_date']) or datetime.date.min).toordinal()
+        parse_order_date(c.last_order_date) is None,
+        -(parse_order_date(c.last_order_date) or datetime.date.min).toordinal()
     ))
 
 def sort_by_total_orders(clients):
-    return sorted(clients, key=lambda c: c['total_orders'], reverse=True)
+    return sorted(clients, key=lambda c: c.total_orders, reverse=True)
 
 def sort_clients(clients, sort_by):
     if sort_by == 'bonus_points':
