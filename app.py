@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
-b_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
+bd_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if not db_url:
     raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
 
