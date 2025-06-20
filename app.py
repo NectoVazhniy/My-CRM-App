@@ -20,30 +20,14 @@ if not db_url:
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-# Путь к SSL сертификату
-ssl_cert_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BaltimoreCyberTrustRoot.crt.pem')
-
-# Настройка SQLAlchemy
+# Настройка SQLAlchemy без валидации CA
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# SSL fallback логика
-if os.path.exists(ssl_cert_path):
-    print(f"✅ Найден сертификат: {ssl_cert_path}")
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        "connect_args": {
-            "sslmode": "verify-ca",
-            "sslrootcert": ssl_cert_path
-        }
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "connect_args": {
+        "sslmode": "require"
     }
-else:
-    print(f"⚠️ Сертификат не найден: {ssl_cert_path}")
-    print("➡️ Переход на sslmode=require (без валидации)")
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        "connect_args": {
-            "sslmode": "require"
-        }
-    }
+}
 
 # Инициализация базы данных
 db = SQLAlchemy(app)
