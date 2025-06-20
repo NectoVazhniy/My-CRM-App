@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Клиенты</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Список клиентов</h1>
+
+<div class="crm-header-controls">
+    <div class="crm-filters-panel">
+        <form method="GET" action="/clients">
+            <input type="text" name="search" placeholder="Поиск..." value="{{ search or '' }}">
+
+            <label for="sort_by">Отсортировать по:</label>
+            <select name="sort_by" id="sort_by" onchange="togglePointsFilter()">
+                <option value="bonus_points" {% if sort_by =='bonus_points' %}selected{% endif %}>Бонусам</option>
+                <option value="last_order_oldest" {% if sort_by =='last_order_oldest' %}selected{% endif %}>Давно не заказывали</option>
+                <option value="last_order_newest" {% if sort_by =='last_order_newest' %}selected{% endif %}>Недавно заказывали</option>
+                <option value="total_orders" {% if sort_by =='total_orders' %}selected{% endif %}>Сумме заказов</option>
+                <option value="nearest_birthday" {% if sort_by =='nearest_birthday' %}selected{% endif %}>Ближайшему дню рождения</option>
+            </select>
+
+
+            <div id="points_filter">
+                <input type="number" name="min_points" placeholder="Баллы от" value="{{ min_points or '' }}">
+                <input type="number" name="max_points" placeholder="до" value="{{ max_points or '' }}">
+            </div>
+
+            <div id="orders_filter">
+                <input type="number" name="min_orders" placeholder="Сумма от" value="{{ min_orders or '' }}">
+                <input type="number" name="max_orders" placeholder="до" value="{{ max_orders or '' }}">
+            </div>
+
+            <button type="submit">Применить</button>
+
+            {% if search or min_points or max_points or min_orders or max_orders or sort_by != 'bonus_points' %}
+                <a href="/clients">Сбросить</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="crm-user-stats">
+        <p>Вы вошли как <strong>{{ current_user.username }}</strong>. [<a href="/logout">Выйти</a>]</p>
+        <p><a href="/change_password">Сменить пароль</a></p>
+        <p>Всего клиентов: <strong>{{ total_clients }}</strong></p>
+        <p>Общая сумма заказов: <strong>{{ total_sum }} сом</strong></p>
+        <p><a href="/clients/export" download>Экспорт в Excel</a></p>
+        <p><a href="/clients/new" class="add-client">+ Добавить клиента</a></p>
+    </div>
+</div>
+
+<script>
+function togglePointsFilter() {
+    const select = document.getElementById('sort_by');
+    const pointsFilter = document.getElementById('points_filter');
+    const ordersFilter = document.getElementById('orders_filter');
+
+    pointsFilter.style.display = (select.value === 'bonus_points') ? 'inline' : 'none';
+    ordersFilter.style.display = (select.value === 'total_orders') ? 'inline' : 'none';
+}
+
+document.addEventListener("DOMContentLoaded", togglePointsFilter);
+</script>
+
+    <div class="table-wrapper">
+    <table border="1">
+    <tr>
+        <th>ID</th>
+        <th>ФИО</th>
+        <th>Телефон</th>
+        <th>Email</th>
+        <th>Сумма заказов</th>
+        <th>Дата рождения</th>
+        <th>Баллы</th>
+        <th>Последний заказ</th>
+        <th>Действия</th>
+
+    </tr>
+    {% for client in clients %}
+    <tr>
+        <td>{{ client['id'] }}</td>
+        <td>{{ client['name'] }}</td>
+        <td>{{ client['phone'] }}</td>
+        <td>{{ client['email'] }}</td>
+        <td>{{ client['total_orders'] }}</td>
+        <td>{{ client['birth_date'] }}</td>
+        <td>{{ client['bonus_points'] }}</td>
+        <td>
+    {% if not client['last_order_date'] or client['last_order_date'] in ['0', '0000-00-00', 'None', None, ''] %}
+        Отсутствует
+    {% else %}
+        {{ client['last_order_date'] }}
+    {% endif %}
+</td>
+
+        <td>
+  <a href="/clients/edit/{{ client['id'] }}">Редактировать</a> |
+  <a href="/clients/delete/{{ client['id'] }}"
+     onclick="return confirm('Вы уверены, что хотите удалить этого клиента?');">
+     Удалить
+  </a>
+</td>
+
+    </tr>
+    {% endfor %}
+</table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="form-box">
+    <h2>Регистрация</h2>
+
+    {% if message %}
+        <p style="color: red;"><strong>{{ message }}</strong></p>
+    {% endif %}
+    <p id="js-message" style="color: red;"></p>
+
+    <form method="POST" onsubmit="return validateRegister()">
+        <label>Логин:</label><br>
+        <input type="text" name="username" required minlength="3" maxlength="20"><br><br>
+
+        <label>Пароль:</label><br>
+        <input type="password" id="password" name="password" required minlength="6"><br><br>
+
+        <label>Подтверждение пароля:</label><br>
+        <input type="password" id="confirm_password" required minlength="6"><br><br>
+
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+
+    <p><a href="/login">Уже есть аккаунт?</a></p>
+
+    <script>
+    function validateRegister() {
+        const pw = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const jsMessage = document.getElementById('js-message');
+
+        if (pw !== confirm) {
+            jsMessage.textContent = "Пароли не совпадают.";
+            return false;
+        }
+
+        jsMessage.textContent = "";
+        return true;
+    }
+    </script>
+    </div>
+</body>
+</html>
+
