@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
-db_url = os.environ.get('DATABASE_URL')
+db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if db_url and db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)  # Исправляем префикс
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url  # Используем исправленную строку
