@@ -16,19 +16,20 @@ db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if not db_url:
     raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
 
-# Исправляем старый формат URL, если он есть
+# Исправление устаревшего формата
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 # Путь к SSL сертификату
 ssl_cert_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BaltimoreCyberTrustRoot.crt.pem')
 
-# Настройка SQLAlchemy с fallback
+# Настройка SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# SSL fallback логика
 if os.path.exists(ssl_cert_path):
-    print(f"✅ SSL сертификат найден: {ssl_cert_path}")
+    print(f"✅ Найден сертификат: {ssl_cert_path}")
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "connect_args": {
             "sslmode": "verify-ca",
@@ -36,8 +37,8 @@ if os.path.exists(ssl_cert_path):
         }
     }
 else:
-    print(f"⚠️ SSL сертификат не найден по пути: {ssl_cert_path}")
-    print("➡️ Используется sslmode=require (без проверки CA)")
+    print(f"⚠️ Сертификат не найден: {ssl_cert_path}")
+    print("➡️ Переход на sslmode=require (без валидации)")
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "connect_args": {
             "sslmode": "require"
@@ -51,9 +52,10 @@ db = SQLAlchemy(app)
 try:
     with app.app_context():
         db.session.execute(text("SELECT 1"))
-    print("✅ УСПЕШНО: подключение к базе прошло.")
+    print("✅ Подключение к базе успешно.")
 except Exception as e:
     print("❌ ОШИБКА при подключении к базе:", e)
+
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
