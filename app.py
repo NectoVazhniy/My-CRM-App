@@ -13,8 +13,8 @@ app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
 db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
 if db_url and db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)  # Исправляем префикс
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url  # Используем исправленную строку
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL") + "?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
