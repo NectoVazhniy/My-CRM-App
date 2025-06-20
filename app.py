@@ -9,7 +9,6 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-# Инициализация Flask
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
@@ -22,14 +21,18 @@ if not db_url:
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+# Путь к файлу сертификата — укажи, где он лежит в проекте
+ssl_cert_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BaltimoreCyberTrustRoot.crt.pem')
+
 # Настройки SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# КЛЮЧЕВОЕ: подключение с SSL
+# Подключение с SSL и проверкой сертификата
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "connect_args": {
-        "sslmode": "require"  # можно также попробовать "prefer" или "allow"
+        "sslmode": "verify-ca",
+        "sslrootcert": ssl_cert_path
     }
 }
 
