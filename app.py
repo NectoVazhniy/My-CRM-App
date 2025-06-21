@@ -13,24 +13,17 @@ import os
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
-db_url = os.environ.get("SQLALCHEMY_DATABASE_URI")
+# Получение и проверка DATABASE_URL
+db_url = os.environ.get("DATABASE_URL")
 if not db_url:
-    raise ValueError("DATABASE URL missing")
+    raise ValueError("❌ Переменная DATABASE_URL не задана!")
 
-# Не добавляй connect_args — SSL будет установлен по ?sslmode=require в самой строке
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
-
-# Тест соединения
-try:
-    with app.app_context():
-        db.session.execute(text("SELECT 1"))
-    print("✅ DB connected")
-except Exception as e:
-    print("❌ DB connection error:", e)
-# Инициализация базы данных
 db = SQLAlchemy(app)
 
 # Проверка подключения
@@ -40,7 +33,6 @@ try:
     print("✅ Подключение к базе успешно.")
 except Exception as e:
     print("❌ ОШИБКА при подключении к базе:", e)
-
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
