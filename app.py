@@ -8,27 +8,27 @@ from openpyxl.workbook import Workbook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__, template_folder='templates')
-app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+import os
 
-# Получение и проверка URL базы данных
-db_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
+db_url = os.environ.get("SQLALCHEMY_DATABASE_URI")
 if not db_url:
-    raise ValueError("❌ Переменная SQLALCHEMY_DATABASE_URI не задана!")
+    raise ValueError("DATABASE URL missing")
 
-# Исправление устаревшего формата
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+# Не добавляй connect_args — SSL будет установлен по ?sslmode=require в самой строке
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Настройка SQLAlchemy без валидации CA
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "connect_args": {
-        "sslmode": "require"
-    }
-}
+db = SQLAlchemy(app)
 
+# Тест соединения
+try:
+    with app.app_context():
+        db.session.execute(text("SELECT 1"))
+    print("✅ DB connected")
+except Exception as e:
+    print("❌ DB connection error:", e)
 # Инициализация базы данных
 db = SQLAlchemy(app)
 
