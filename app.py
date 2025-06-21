@@ -7,10 +7,11 @@ from sqlalchemy import text
 from openpyxl.workbook import Workbook
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import os
+app = Flask(__name__, template_folder='templates')
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 
 db_url = os.environ.get("SQLALCHEMY_DATABASE_URI")
 if not db_url:
